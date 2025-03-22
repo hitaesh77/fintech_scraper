@@ -41,20 +41,16 @@ def initialize_scraper():
         print(company)
         intern_dict[company] = []
     
-    return career_urls, base_urls, job_classes, location_classes, intern_dict
+    return companies, career_urls, base_urls, job_classes, location_classes, intern_dict
 
-# TODO: Implement the function to search for student jobs
-def search_student_jobs(job_link, intern_dict):
-    # Placeholder function for searching student jobs
-    # This function can be expanded to scrape job postings from the given URL
-    response = requests.get(job_link)
-    html_data = response.text
-    soup = BeautifulSoup(html_data, 'html.parser')
-    job_title = soup.find(name="h1").text.strip()  # Example: Extract job title
-    print(f"Job Title: {job_title}")
+# Function to search for student jobs in the job titles and add them to the dictionary
+def search_student_jobs(job_titles, company, intern_dict):
+    for title in job_titles:
+        if "intern" in title.lower() or "student" in title.lower() or "summer" in title.lower():
+            intern_dict[company].append(title)
 
+# Function to scrape job titles from a given career URL
 def get_job_titles(career_url, job_class_name):
-    #print(job_class_name)
     response = requests.get(career_url)
     html_data = response.text
     soup = BeautifulSoup(html_data, 'html.parser')
@@ -62,18 +58,20 @@ def get_job_titles(career_url, job_class_name):
     job_titles = [job.text.strip() for job in job_elements]
     return job_titles
 
-# Read URLs from the file
-def load_dict(career_urls, job_classes, intern_dict):
+# Initial loading of the intern dictionary
+def load_dict(career_urls, job_classes, companies, intern_dict):
     for i, career_url in enumerate(career_urls):
         career_url = career_url.strip() # removes whitespace
         if not career_url:
             continue  # Skip empty lines
         
         job_titles = get_job_titles(career_url, job_classes[i])
+        search_student_jobs(job_titles, companies[i], intern_dict)
 
 if __name__ == "__main__":
-    career_urls, base_urls, job_classes, location_classes, intern_dict = initialize_scraper()
+    companies, career_urls, base_urls, job_classes, location_classes, intern_dict = initialize_scraper()
     
-    load_dict(career_urls, job_classes, intern_dict)
+    load_dict(career_urls, job_classes, companies, intern_dict)
+    print(intern_dict)
     
     print("Scraping completed.")
