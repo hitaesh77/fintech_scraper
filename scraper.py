@@ -29,9 +29,11 @@ def normalize_job_links(base_url, job_links):
 def initialize_scraper():
     # Read the Excel file containing company names and URLs
     urls_df = pd.read_excel("urls.xlsx")
-    companies = urls_df.loc[:, "Names"].tolist()
-    career_urls = urls_df.loc[:, "Careers"].tolist()
-    base_urls = urls_df.loc[:, "Base"].tolist()
+    companies = urls_df.loc[:, "names"].tolist()
+    career_urls = urls_df.loc[:, "careers"].tolist()
+    base_urls = urls_df.loc[:, "base"].tolist()
+    job_classes = urls_df.loc[:, "job_classes"].tolist()
+    location_classes = urls_df.loc[:, "location_classes"].tolist()
     
     # Initialize an empty dictionary to store job links
     intern_dict = {}
@@ -39,7 +41,7 @@ def initialize_scraper():
         print(company)
         intern_dict[company] = []
     
-    return career_urls, base_urls, intern_dict
+    return career_urls, base_urls, job_classes, location_classes, intern_dict
 
 # TODO: Implement the function to search for student jobs
 def search_student_jobs(job_link, intern_dict):
@@ -51,27 +53,27 @@ def search_student_jobs(job_link, intern_dict):
     job_title = soup.find(name="h1").text.strip()  # Example: Extract job title
     print(f"Job Title: {job_title}")
 
-def get_job_titles(career_url):
+def get_job_titles(career_url, job_class_name):
+    #print(job_class_name)
     response = requests.get(career_url)
     html_data = response.text
     soup = BeautifulSoup(html_data, 'html.parser')
-    job_elements = soup.find_all(class_="job-title")  
-    job_titles = [job.text.strip() for job in job_elements]  # Example: Extract job titles
+    job_elements = soup.find_all(class_=job_class_name)  
+    job_titles = [job.text.strip() for job in job_elements]
     return job_titles
 
 # Read URLs from the file
-def load_dict(career_urls, base_urls, intern_dict):
+def load_dict(career_urls, job_classes, intern_dict):
     for i, career_url in enumerate(career_urls):
-        career_url = career_url.strip()
+        career_url = career_url.strip() # removes whitespace
         if not career_url:
             continue  # Skip empty lines
         
-        job_titles = get_job_titles(career_url)
-        print(job_titles)
+        job_titles = get_job_titles(career_url, job_classes[i])
 
 if __name__ == "__main__":
-    career_urls, base_urls, intern_dict = initialize_scraper()
+    career_urls, base_urls, job_classes, location_classes, intern_dict = initialize_scraper()
     
-    load_dict(career_urls, base_urls, intern_dict)
+    load_dict(career_urls, job_classes, intern_dict)
     
     print("Scraping completed.")
