@@ -2,28 +2,32 @@ import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+import pywhatkit as kit
+
+key_locations = ["chicago", "new york", "boston", "los angeles", "san francisco", "seattle", "austin", "philadelphia", "remote"]
+phone_number = "+haha you thought"
 
 # helper functions:
 def is_valid_url(url):
     parsed = urlparse(url)
     # A valid URL must have a scheme (e.g., "http") and a netloc (e.g., "example.com")
     return bool(parsed.scheme) and bool(parsed.netloc)
-    # return bool(parsed.netloc)
 
-def get_full_url(base_url, relative_url):
-    if(is_valid_url(relative_url)):
-        return relative_url
-    elif relative_url.startswith("//"):
-        relative_url = "https:" + relative_url
-        return relative_url
-    elif relative_url.startswith("/"):
-        return base_url + relative_url
+# Function to print the intern dictionary for easier testing and debugging
+def print_intern_dict(intern_dict):
+    for company, jobs in intern_dict.items():
+        print(f"{company}:", ", ".join(jobs) if jobs else "No student jobs found.")
 
-def normalize_job_links(base_url, job_links):
-    for i, link in enumerate(job_links):
-        job_links[i] = get_full_url(base_url, link)
+# Function to test individual comapanies: helps validate job class and location classes
+def test_company(company, intern_dict):
+    if company in intern_dict:
+        print(f"{company}:", ", ".join(intern_dict[company]) if intern_dict[company] else "No student jobs found.")
+    else:
+        print(f"{company} not found in the dictionary.")
 
-
+# whatsapp message test
+def send_message(message):
+    kit.sendwhatmsg_instantly(phone_number, message, 10, tab_close=True)
 
 # initialize scraper by reading file and creating a dictionary
 def initialize_scraper():
@@ -55,8 +59,18 @@ def get_job_titles(career_url, job_class_name):
     html_data = response.text
     soup = BeautifulSoup(html_data, 'html.parser')
     job_elements = soup.find_all(class_=job_class_name)  
-    job_titles = [job.text.strip() for job in job_elements]
+    #job_titles = [job.text.strip() for job in job_elements]
+    #return job_titles
+    job_titles = []
+    for job in job_elements:
+        # Extract all text inside the parent element (including nested tags)
+        cleaned_text = " ".join(job.stripped_strings)  # Handles deeply nested text
+        if cleaned_text:
+            job_titles.append(cleaned_text)
+
     return job_titles
+
+
 
 # Initial loading of the intern dictionary
 def load_dict(career_urls, job_classes, companies, intern_dict):
@@ -72,6 +86,10 @@ if __name__ == "__main__":
     companies, career_urls, base_urls, job_classes, location_classes, intern_dict = initialize_scraper()
     
     load_dict(career_urls, job_classes, companies, intern_dict)
-    print(intern_dict)
+    #print_intern_dict(intern_dict)
+    test_company("Susquehanna", intern_dict)
     
     print("Scraping completed.")
+
+    #testing
+    send_message("What's up gang") 
