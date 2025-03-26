@@ -3,9 +3,20 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import pywhatkit as kit
+from selenium import webdriver
+#from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+import time
 
+# Constants
 key_locations = ["chicago", "new york", "boston", "los angeles", "san francisco", "seattle", "austin", "philadelphia", "remote"]
 phone_number = "+haha you thought"
+student_keywords = ["intern", "student", "summer", "fall", "spring", "co-op", "internship", "undergrad"]
+
+# chrome setup
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Enables headless mode
+chrome_options.add_argument("--disable-gpu")  # Recommended for headless mode
 
 # helper functions:
 def is_valid_url(url):
@@ -51,16 +62,24 @@ def initialize_scraper():
 # Function to search for student jobs in the job titles and add them to the dictionary
 def search_student_jobs(job_titles, company, intern_dict):
     for title in job_titles:
-        if "intern" in title.lower() or "student" in title.lower() or "summer" in title.lower():
-            intern_dict[company].append(title)
+        for keyword in student_keywords:
+            if keyword in title.lower():
+                intern_dict[company].append(title)
 
 # Function to scrape job titles from a given career URL
 def get_job_titles(career_url, job_class_name):
-    response = requests.get(career_url)
-    html_data = response.text
-    soup = BeautifulSoup(html_data, 'html.parser')
+    driver = webdriver.Chrome(options=chrome_options)  # Use the Chrome WebDriver
+    driver.get(career_url)
+
+    # Allow the page to fully load
+    time.sleep(2)
+    page_source = driver.page_source
+    # response = requests.get(career_url)
+     #html_data = response.text
+    soup = BeautifulSoup(page_source, 'html.parser')
     job_elements = soup.find_all(class_=job_class_name)  
     job_titles = [job.text.strip() for job in job_elements]
+    driver.quit()
 
     # for nested job titles
     if not job_titles:
@@ -86,7 +105,7 @@ if __name__ == "__main__":
     
     load_dict(career_urls, job_classes, companies, intern_dict)
     #print_intern_dict(intern_dict)
-    test_company("Susquehanna", intern_dict)
+    test_company("IMC", intern_dict)
     
     print("Scraping completed.")
 
