@@ -29,6 +29,7 @@ def test_company(company, intern_dict):
 def send_message(message):
     kit.sendwhatmsg_instantly(phone_number, message, 10, tab_close=True)
 
+# Main Code
 # initialize scraper by reading file and creating a dictionary
 def initialize_scraper():
     # Read the Excel file containing company names and URLs
@@ -59,18 +60,16 @@ def get_job_titles(career_url, job_class_name):
     html_data = response.text
     soup = BeautifulSoup(html_data, 'html.parser')
     job_elements = soup.find_all(class_=job_class_name)  
-    #job_titles = [job.text.strip() for job in job_elements]
-    #return job_titles
-    job_titles = []
-    for job in job_elements:
-        # Extract all text inside the parent element (including nested tags)
-        cleaned_text = " ".join(job.stripped_strings)  # Handles deeply nested text
-        if cleaned_text:
-            job_titles.append(cleaned_text)
+    job_titles = [job.text.strip() for job in job_elements]
 
+    # for nested job titles
+    if not job_titles:
+        job_title_div = soup.find('div', class_='job-title')
+        if job_title_div:
+            job_title = job_title_div.find('span').text.strip()
+            job_titles.append(job_title)
+    
     return job_titles
-
-
 
 # Initial loading of the intern dictionary
 def load_dict(career_urls, job_classes, companies, intern_dict):
@@ -92,4 +91,4 @@ if __name__ == "__main__":
     print("Scraping completed.")
 
     #testing
-    send_message("What's up gang") 
+    #send_message("What's up gang") 
